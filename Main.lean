@@ -1,15 +1,16 @@
 import NestCore
 
-def Assertion := IO Bool
-def assert (bool : Bool) : Assertion := pure bool
-def assertIO (bool : IO Bool) : Assertion := bool
+open Nest.Core
 
-def fileRes (path : System.FilePath) (mode : IO.FS.Mode) : Nest.Core.ResourceSpec IO.FS.Handle where
+abbrev TRes := IO Bool
+def tres (bool : Bool) : TRes := pure bool
+
+def fileRes (path : System.FilePath) (mode : IO.FS.Mode) : ResourceSpec IO.FS.Handle where
   get := IO.FS.Handle.mk path mode
   release handle := handle.flush
   description := s!"A file handle to {path}"
 
-instance : Nest.Core.IsTest Assertion where
+instance : IsTest TRes where
   run _ assertion := do
     let val ← assertion
     if val then
@@ -28,19 +29,23 @@ instance : Nest.Core.IsTest Assertion where
       }
 
 -- TODO: syntax extension
-def tests : Nest.Core.TestTree :=
-  .group "Main Tests" [
-    .group "Group 1" [
-      .single "assertion 1" (assert true),
-      .single "assertion 2" (assert true)
-    ],
-    .group "Group 2" [
-      .withResource (fileRes "/dev/zero" .read) <| fun res => .group s!"With resource" [
-        .single "assertion 3" <| assertIO do
+def tests : TestTree := [nest|
+  group "Main Tests"
+    group "Group 1"
+      test "assertion 1" do
+        tres true
+      test "assertion 2" do
+        tres true
+    group "Group 2"
+      with resource fileRes "/dev/zero" .read as res
+        test "assertion 3" do
           let data ← res.read 12
-          return data.size == 12
-      ]
-    ]
-  ]
+          tres <| data.size == 12
+    group "Group 3"
+      with options fun x => x.insert `Hello "foo"
+        with options as x
+          test "assertion 4"  do
+            tres (x.contains `Hello)
+]
 
 def main : IO Unit := Nest.Core.defaultMain tests
