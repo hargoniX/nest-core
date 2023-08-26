@@ -49,12 +49,12 @@ def tests : TestTree := [nest|
       with resource fileRes "/dev/zero" .read as res
         test "assertion 3" : UnitTest := do
           let data ← res.read 12
-          assert data.size = 12
+          assert <| data.size = 12
     group "Option based"
       with options fun x => x.insert `Hello "foo"
         with options as x
           test "assertion 4" : UnitTest := do
-            assert x.contains `Hello
+            assert <| x.contains `Hello
 ]
 
 def main : IO UInt32 := Nest.Core.defaultMain tests
@@ -75,12 +75,12 @@ def tests : TestTree :=
       .withResource (fileRes "/dev/zero" .read) fun res =>
         .single (t := UnitTest) "assertion 3" do
           let data ← res.read 12
-          assert data.size = 12
+          assert <| data.size = 12
     ],
     .group "Option based" [
       .withOptions (fun x => x.insert `Hello "foo") <|
         .getOptions fun x =>
-          .single "assertion 4" (assert x.contains `Hello)
+          .single "assertion 4" (assert <| x.contains `Hello)
     ]
   ]
 ```
