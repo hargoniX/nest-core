@@ -6,15 +6,15 @@ namespace Core
 structure TestProcessor where
   relevantOptions : List Lean.Name
   shouldRun? : Options → Bool
-  exec : Options → TestTree → IO Unit
+  exec : Options → TestTree → IO UInt32
  
 namespace TestProcessor
 
-def run? (proc : TestProcessor) (opts : Options) (tests : TestTree) : Option (IO Unit) := do
+def run? (proc : TestProcessor) (opts : Options) (tests : TestTree) : Option (IO UInt32) := do
   guard <| proc.shouldRun? opts
   return proc.exec opts tests
 
-def runFirst? (procs : List TestProcessor) (opts : Options) (tests : TestTree) : Option (IO Unit) := do
+def runFirst? (procs : List TestProcessor) (opts : Options) (tests : TestTree) : Option (IO UInt32) := do
   for proc in procs do
     if proc.shouldRun? opts then
       return proc.exec opts tests

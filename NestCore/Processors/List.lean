@@ -8,7 +8,9 @@ namespace Processors
 partial def list : TestProcessor where
   relevantOptions := [`list]
   shouldRun? opts := opts.findD `list false |>.getBoolEx
-  exec opts tests := go 0 opts tests
+  exec opts tests := do
+    go 0 opts tests
+    return 0
 where
   go (indent : Nat) (opts : Options) (tests : TestTree) : IO Unit := do
     match tests with

@@ -4,7 +4,7 @@ import NestCore.Processors
 namespace Nest
 namespace Core
 
-def defaultMainWithTestProcessor (procs : List TestProcessor) (tests : TestTree) : IO Unit := do
+def defaultMainWithTestProcessor (procs : List TestProcessor) (tests : TestTree) : IO UInt32 := do
   -- TODO: get from command line
   let opts := .empty
   match TestProcessor.runFirst? procs opts tests with
@@ -15,7 +15,7 @@ def defaultMainWithTestProcessor (procs : List TestProcessor) (tests : TestTree)
 
 def defaultTestProcessors : List TestProcessor := [Processors.list, Processors.runConsole]
 
-def defaultMain (tests : TestTree) : IO Unit :=
+def defaultMain (tests : TestTree) : IO UInt32 :=
   defaultMainWithTestProcessor defaultTestProcessors tests
 
 end Core

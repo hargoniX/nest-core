@@ -10,9 +10,11 @@ partial def runConsole : TestProcessor where
   shouldRun? _ := true
   exec opts tests := go 0 opts tests
 where
-  printResult (indent : Nat) (name : String) (res : Result) : IO Unit := do
+  printResult (indent : Nat) (name : String) (res : Result) : IO UInt32 := do
     match res.outcome with
-    | .success => printPrefix indent s!"{name}: {res.shortDescription} [OK]"
+    | .success =>
+      printPrefix indent s!"{name}: {res.shortDescription} [OK]"
+      return 0
     | .failure reason =>
       match reason with
       | .generic =>
@@ -27,25 +29,30 @@ where
           printPrefix (indent + 2) details
       | .depFailed =>
         printPrefix indent s!"{name}: {res.shortDescription} [SKIPPED] (dependency failed)"
+      return 1
 
-  go (indent : Nat) (opts : Options) (tests : TestTree) : IO Unit := do
+  go (indent : Nat) (opts : Options) (tests : TestTree) : IO UInt32 := do
     match tests with
     | .singleInt inst name test =>
-      let res ←
-        try
-          inst.run opts test
-        catch e =>
-          pure {
-            outcome := .failure <| .io e,
-            description := "uncaught IO exception from test suite"
-            shortDescription := "uncaught IO exception from test suite"
-            details := do
-              return s!"IO error: {e.toString}"
-          }
-      printResult indent name res
+      try
+        let res ← inst.run opts test
+        printResult indent name res
+      catch e =>
+        let res := {
+          outcome := .failure <| .io e,
+          description := "uncaught IO exception from test suite"
+          shortDescription := "uncaught IO exception from test suite"
+          details := do
+            return s!"IO error: {e.toString}"
+        }
+        printResult indent name res
     | .group name tests =>
       printPrefix indent s!"Running group {name}:"
-      tests.forM (go (indent + 2) opts ·)
+      let res ← tests.mapM (go (indent + 2) opts ·)
+      if res.find? (· != 0) |>.isSome then
+        return 1
+      else
+        return 0
     | .withOptions f x => go indent (f opts) x
     | .withResource spec tests =>
       printPrefix indent s!"Acquiring resource: {spec.description}"
