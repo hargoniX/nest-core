@@ -108,7 +108,7 @@ structure TestProcessor where
 The
 - `relevantOptions` fields tells `nest` which keys in `Options` you are interested in
 - `shouldRun?` field is called with the provided options and returns whether to use this processor or not
-- `exec` field is used to actually run a `TestTree` and provides a return code via the `UInt32`
+- `exec` field is used to actually run a `TestTree` and provides an exit code via the `UInt32`
   return value.
 
 In order to then inject your own `TestProcessor` into the framework you

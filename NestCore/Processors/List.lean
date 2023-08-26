@@ -5,6 +5,10 @@ namespace Nest
 namespace Core
 namespace Processors
 
+/--
+A `TestProcessor` that simply enumerates the `TestTree`, use the `list`
+option to enable.
+-/
 partial def list : TestProcessor where
   relevantOptions := [`list]
   shouldRun? opts := opts.findD `list false |>.getBoolEx

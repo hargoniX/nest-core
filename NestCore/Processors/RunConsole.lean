@@ -5,6 +5,10 @@ namespace Nest
 namespace Core
 namespace Processors
 
+/--
+A test processor that actually executes the `TestTree` and prints the result
+to stdout.
+-/
 partial def runConsole : TestProcessor where
   relevantOptions := []
   shouldRun? _ := true
@@ -19,14 +23,12 @@ where
       match reason with
       | .generic =>
         printPrefix indent s!"{name}: {res.shortDescription} [FAIL]"
-        let details ← res.details
-        unless details == "" do
-          printPrefix (indent + 2) details
+        unless res.details == "" do
+          printPrefix (indent + 2) res.details
       | .io _ =>
         printPrefix indent s!"{name}: {res.shortDescription} [ERR]"
-        let details ← res.details
-        unless details == "" do
-          printPrefix (indent + 2) details
+        unless res.details == "" do
+          printPrefix (indent + 2) res.details
       | .depFailed =>
         printPrefix indent s!"{name}: {res.shortDescription} [SKIPPED] (dependency failed)"
       return 1
@@ -42,8 +44,7 @@ where
           outcome := .failure <| .io e,
           description := "uncaught IO exception from test suite"
           shortDescription := "uncaught IO exception from test suite"
-          details := do
-            return s!"IO error: {e.toString}"
+          details := "IO error: {e.toString}"
         }
         printResult indent name res
     | .group name tests =>
