@@ -63,7 +63,27 @@ def main : IO UInt32 := Nest.Core.defaultMain tests
 As you can see `nest-core` provides a scoped syntax extension to write
 a `TestTree`. If you wish to write your own `TestTree` without this
 extension this is perfectly possible as well since the syntax is just a
-very minimal layer on top of the constructors.
+very minimal layer on top of the constructors:
+```lean
+def tests : TestTree :=
+  .group "Self Tests" [
+    .group "Basics" [
+      .single "succeeds on true" (assert true),
+      .single "fails on false" (assert false)
+    ],
+    .group "Resource based" [
+      .withResource (fileRes "/dev/zero" .read) fun res =>
+        .single (t := UnitTest) "assertion 3" do
+          let data ← res.read 12
+          assert data.size = 12
+    ],
+    .group "Option based" [
+      .withOptions (fun x => x.insert `Hello "foo") <|
+        .getOptions fun x =>
+          .single "assertion 4" (assert x.contains `Hello)
+    ]
+  ]
+```
 
 Besides just basic groups and tests `nest-core` supports two further primitives
 as seen above:
