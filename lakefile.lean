@@ -9,8 +9,3 @@ package «nest-core» {
 lean_lib «NestCore» {
   -- add library configuration options here
 }
-
-
-lean_exe Main {
-
-}
