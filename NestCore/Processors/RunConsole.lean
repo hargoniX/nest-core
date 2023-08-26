@@ -18,12 +18,13 @@ where
       | .generic =>
         printPrefix indent s!"{name}: {res.shortDescription} [FAIL]"
         let details ← res.details
-        printPrefix (indent + 2) details
-        IO.println details
+        unless details == "" do
+          printPrefix (indent + 2) details
       | .io _ =>
         printPrefix indent s!"{name}: {res.shortDescription} [ERR]"
         let details ← res.details
-        printPrefix (indent + 2) details
+        unless details == "" do
+          printPrefix (indent + 2) details
       | .depFailed =>
         printPrefix indent s!"{name}: {res.shortDescription} [SKIPPED] (dependency failed)"
 
