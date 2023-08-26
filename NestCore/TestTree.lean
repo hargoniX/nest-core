@@ -10,18 +10,25 @@ inductive FailureReason where
 | io (error : IO.Error)
 | depFailed
 
-
 inductive Outcome where
 | success
 | failure (reason : FailureReason)
 
-def DetailsPrinter := (indentation : Nat) → IO Unit
-  
+def Details := IO String
+
+def indentPrefix (indent : Nat) (str : String := "") : String :=
+  match indent with
+  | 0 => str
+  | n + 1 => indentPrefix n (str ++ " ")
+
+def printPrefix (indent : Nat) (str : String) : IO Unit :=
+  IO.println <| (indentPrefix indent) ++ str
+
 structure Result where
   outcome : Outcome
   description : String
   shortDescription : String
-  detailsPrinter : DetailsPrinter
+  details : Details
 
 class IsTest (t : Type) where
   run : Options → t → IO Result

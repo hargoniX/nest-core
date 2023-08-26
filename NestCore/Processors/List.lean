@@ -1,4 +1,5 @@
 import NestCore.TestProcessor
+import NestCore.TestTree
 
 namespace Nest
 namespace Core
@@ -9,14 +10,6 @@ partial def list : TestProcessor where
   shouldRun? opts := opts.findD `list false |>.getBoolEx
   exec opts tests := go 0 opts tests
 where
-  indentPrefix (indent : Nat) (str : String := "") : String :=
-    match indent with
-    | 0 => str
-    | n + 1 => indentPrefix n (str ++ " ")
-
-  printPrefix (indent : Nat) (str : String) : IO Unit :=
-    IO.println <| (indentPrefix indent) ++ str
-
   go (indent : Nat) (opts : Options) (tests : TestTree) : IO Unit := do
     match tests with
     | .singleInt _ name _ => printPrefix indent s!"test: {name}"

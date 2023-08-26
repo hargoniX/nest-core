@@ -1,4 +1,5 @@
 import NestCore.TestProcessor
+import NestCore.TestTree
 
 namespace Nest
 namespace Core
@@ -9,14 +10,6 @@ partial def runConsole : TestProcessor where
   shouldRun? _ := true
   exec opts tests := go 0 opts tests
 where
-  indentPrefix (indent : Nat) (str : String := "") : String :=
-    match indent with
-    | 0 => str
-    | n + 1 => indentPrefix n (str ++ " ")
-
-  printPrefix (indent : Nat) (str : String) : IO Unit :=
-    IO.println <| (indentPrefix indent) ++ str
-
   printResult (indent : Nat) (name : String) (res : Result) : IO Unit := do
     match res.outcome with
     | .success => printPrefix indent s!"{name}: {res.shortDescription} [OK]"
@@ -24,10 +17,13 @@ where
       match reason with
       | .generic =>
         printPrefix indent s!"{name}: {res.shortDescription} [FAIL]"
-        res.detailsPrinter (indent + 2)
+        let details ← res.details
+        printPrefix (indent + 2) details
+        IO.println details
       | .io _ =>
         printPrefix indent s!"{name}: {res.shortDescription} [ERR]"
-        res.detailsPrinter (indent + 2)
+        let details ← res.details
+        printPrefix (indent + 2) details
       | .depFailed =>
         printPrefix indent s!"{name}: {res.shortDescription} [SKIPPED] (dependency failed)"
 
@@ -42,8 +38,8 @@ where
             outcome := .failure <| .io e,
             description := "uncaught IO exception from test suite"
             shortDescription := "uncaught IO exception from test suite"
-            detailsPrinter := fun indent => do
-              printPrefix indent s!"IO error: {e.toString}"
+            details := do
+              return s!"IO error: {e.toString}"
           }
       printResult indent name res
     | .group name tests =>
