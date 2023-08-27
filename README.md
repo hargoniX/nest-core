@@ -73,7 +73,7 @@ def tests : TestTree :=
     ],
     .group "Resource based" [
       .withResource (fileRes "/dev/zero" .read) fun res =>
-        .single (t := UnitTest) "assertion 3" do
+        .unitTest "assertion 3" do
           let data ← res.read 12
           assert <| data.size = 12
     ],
