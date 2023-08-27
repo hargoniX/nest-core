@@ -18,6 +18,8 @@ where
     match res.outcome with
     | .success =>
       printPrefix indent s!"{name}: {res.shortDescription} [OK]"
+      unless res.details == "" do
+        printPrefix (indent + 2) res.details
       return 0
     | .failure reason =>
       match reason with
