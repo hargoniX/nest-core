@@ -5,6 +5,13 @@ namespace Nest
 namespace Core
 namespace Processors
 
+private structure TestRun where
+  successes : Nat
+  failures : Nat
+
+instance : Add TestRun where
+  add a b := ⟨a.successes + b.successes, a.failures + b.failures⟩
+
 /--
 A test processor that actually executes the `TestTree` and prints the result
 to stdout.
@@ -12,30 +19,41 @@ to stdout.
 partial def runConsole : TestProcessor where
   relevantOptions := []
   shouldRun? _ := true
-  exec opts tests := go 0 opts tests
+  exec opts tests := do
+    let run ← go 0 opts tests
+    let total := run.failures + run.successes
+    if run.failures > 0 then
+      IO.println <| boldRed s!"{run.failures} out of {total} tests failed"
+      return 1
+    else
+      IO.println <| boldGreen s!"All {total} tests passed"
+      return 0
 where
-  printResult (indent : Nat) (name : String) (res : Result) : IO UInt32 := do
+  reset := "\x1b[0m"
+  boldRed := fun s => "\x1b[1;31m" ++ s ++ reset
+  boldGreen := fun s => "\x1b[1;32m" ++ s ++ reset
+  printResult (indent : Nat) (name : String) (res : Result) : IO TestRun := do
     match res.outcome with
     | .success =>
-      printPrefix indent s!"{name}: {res.shortDescription} [OK]"
+      printPrefix indent <| s!"{name}: " ++ boldGreen "[OK]"
       unless res.details == "" do
         printPrefix (indent + 2) res.details
-      return 0
+      return ⟨1, 0⟩
     | .failure reason =>
       match reason with
       | .generic =>
-        printPrefix indent s!"{name}: {res.shortDescription} [FAIL]"
+        printPrefix indent <| s!"{name}: {res.shortDescription} " ++ boldRed "[FAIL]"
         unless res.details == "" do
           printPrefix (indent + 2) res.details
       | .io _ =>
-        printPrefix indent s!"{name}: {res.shortDescription} [ERR]"
+        printPrefix indent <| s!"{name}: {res.shortDescription} " ++ boldRed "[ERR]"
         unless res.details == "" do
           printPrefix (indent + 2) res.details
       | .depFailed =>
         printPrefix indent s!"{name}: {res.shortDescription} [SKIPPED] (dependency failed)"
-      return 1
+      return ⟨0, 1⟩
 
-  go (indent : Nat) (opts : Options) (tests : TestTree) : IO UInt32 := do
+  go (indent : Nat) (opts : Options) (tests : TestTree) : IO TestRun := do
     match tests with
     | .singleInt inst name test =>
       try
@@ -52,10 +70,7 @@ where
     | .group name tests =>
       printPrefix indent s!"Running group {name}:"
       let res ← tests.mapM (go (indent + 2) opts ·)
-      if res.find? (· != 0) |>.isSome then
-        return 1
-      else
-        return 0
+      return res.foldl (· + ·) ⟨0, 0⟩
     | .withOptions f x => go indent (f opts) x
     | .withResource spec tests =>
       printPrefix indent s!"Acquiring resource: {spec.description}"
