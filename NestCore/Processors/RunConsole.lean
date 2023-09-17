@@ -23,30 +23,30 @@ partial def runConsole : TestProcessor where
     let run ← go 0 opts tests
     let total := run.failures + run.successes
     if run.failures > 0 then
-      IO.println $ boldRed s!"{run.failures} out of {total} tests failed"
+      IO.println <| boldRed s!"{run.failures} out of {total} tests failed"
       return 1
     else
-      IO.println $ boldGreen s!"All {total} tests passed"
+      IO.println <| boldGreen s!"All {total} tests passed"
       return 0
 where
   reset := "\x1b[0m"
-  boldRed := λ s => "\x1b[1;31m" ++ s ++ reset
-  boldGreen := λ s => "\x1b[1;32m" ++ s ++ reset
+  boldRed := fun s => "\x1b[1;31m" ++ s ++ reset
+  boldGreen := fun s => "\x1b[1;32m" ++ s ++ reset
   printResult (indent : Nat) (name : String) (res : Result) : IO TestRun := do
     match res.outcome with
     | .success =>
-      printPrefix indent $ s!"{name}: {res.shortDescription} " ++ boldGreen "[OK]"
+      printPrefix indent <| s!"{name}: " ++ boldGreen "[OK]"
       unless res.details == "" do
         printPrefix (indent + 2) res.details
       return ⟨1, 0⟩
     | .failure reason =>
       match reason with
       | .generic =>
-        printPrefix indent $ s!"{name}: {res.shortDescription} " ++ boldRed "[FAIL]"
+        printPrefix indent <| s!"{name}: {res.shortDescription} " ++ boldRed "[FAIL]"
         unless res.details == "" do
           printPrefix (indent + 2) res.details
       | .io _ =>
-        printPrefix indent $ s!"{name}: {res.shortDescription} " ++ boldRed "[ERR]"
+        printPrefix indent <| s!"{name}: {res.shortDescription} " ++ boldRed "[ERR]"
         unless res.details == "" do
           printPrefix (indent + 2) res.details
       | .depFailed =>
